@@ -1,0 +1,7 @@
+.coverage
+build/
+coverage/
+deb_dist/
+dist/
+kt.testing.egg-info/
+*.pyc
