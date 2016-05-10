@@ -39,7 +39,7 @@ whatever ways are appropriate (using ``mock.patch``, for example).
 Release history
 ---------------
 
-1.1.0 (unreleased)
+1.1.0 (2016-05-10)
 ~~~~~~~~~~~~~~~~~~
 
 New features:
