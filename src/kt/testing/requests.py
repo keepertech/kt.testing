@@ -43,13 +43,14 @@ class Requests(object):
         if self.responses:
             raise AssertionError('configured responses not consumed')
 
-    def add_error(self, method, url, exception):
+    def add_error(self, method, url, exception, filter=None):
         assert isinstance(exception, Exception)
         key = method.upper(), url
         responses = self.responses.setdefault(key, [])
-        responses.append(exception)
+        responses.append((filter, exception))
 
-    def add_response(self, method, url, status=200, body=None, headers={}):
+    def add_response(self, method, url, status=200, body=None, headers={},
+                     filter=None):
         headers = requests.structures.CaseInsensitiveDict(headers)
         key = method.upper(), url
         if status in RESPONSE_ENTITY_NOT_ALLOWED:
@@ -61,16 +62,21 @@ class Requests(object):
             body = self.body
             headers['Content-Type'] = self.content_type
         responses = self.responses.setdefault(key, [])
-        responses.append(Response(status, body, headers))
+        responses.append((filter, Response(status, body, headers)))
 
     def request(self, method, url, *args, **kwargs):
         key = method.upper(), url
-        if key not in self.responses:
-            response = AssertionError('unexpected request: %s %s' % key)
-        else:
-            response = self.responses[key].pop(0)
-            if not self.responses[key]:
-                del self.responses[key]
+        response = AssertionError('unexpected request: %s %s' % key)
+
+        for i, (filter, resp) in enumerate(self.responses.get(key, ())):
+            if filter is None or filter(method, url, *args, **kwargs):
+                del self.responses[key][i]
+                if not self.responses[key]:
+                    # All available responses have been consumed:
+                    del self.responses[key]
+                response = resp
+                break
+
         self.requests.append((method, url, response, args, kwargs))
         if isinstance(response, Exception):
             raise response

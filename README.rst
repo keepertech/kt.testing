@@ -39,6 +39,23 @@ whatever ways are appropriate (using ``mock.patch``, for example).
 Release history
 ---------------
 
+1.1.0 (unreleased)
+~~~~~~~~~~~~~~~~~~
+
+New features:
+
+- ``kt.testing.requests.Requests`` methods ``add_error`` and
+  ``add_response`` grew a new, optional parameter, ``filter``, which
+  accepts a callable wit the same signature as ``requests.request``.
+  The result is a Boolean value that indicates whether request should be
+  considered a match for the response.  The filter function will only be
+  called if the method and URL match.
+
+  This can be used to check whether request body matches some
+  expectation.  This can be especially valuable for RPC-type interfaces
+  (XML-RPC or SOAP, for example).
+
+
 1.0.0 (2016-03-21)
 ~~~~~~~~~~~~~~~~~~
 

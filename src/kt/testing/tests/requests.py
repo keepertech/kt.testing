@@ -48,12 +48,9 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
                 r = self.api.get('http://localhost:8000/foo')
                 assert r.status_code == 200
                 assert r.text == ''
-                try:
-                    r = self.api.get('http://localhost:8000/foo')
-                except socket.gaierror as e:
-                    assert str(e) == 'unknown name'
-                else:  # pragma: no cover
-                    raise AssertionError('expected AssertionError')
+                with self.assertRaises(socket.gaierror) as cm:
+                    self.api.get('http://localhost:8000/foo')
+                self.assertEqual(str(cm.exception), 'unknown name')
 
         self.check_successful_run(TC, count=2)
 
@@ -224,6 +221,45 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
             r = self.api.get('http://www.keepertech.com/')
             assert r.status_code == 200
             assert r.text == 'second'
+        finally:
+            tc.tearDown()
+
+    def test_filtered_responses(self):
+
+        class TC(unittest.TestCase):
+
+            fixture = kt.testing.compose(kt.testing.requests.Requests)
+
+            def testit(self):
+                pass  # pragma: no cover
+
+        tc, = self.loader.makeTest(TC)
+        tc = tc.test
+        tc.setUp()
+
+        tc.fixture.add_response(
+            'post', 'http://www.keepertech.com/', body='first',
+            headers={'content-length': '42'},
+            filter=(lambda *args, **kwargs:
+                    'request 2' in kwargs.get('data')),
+        )
+        tc.fixture.add_response(
+            'post', 'http://www.keepertech.com/', body='second',
+            filter=(lambda *args, **kwargs:
+                    'request 1' in kwargs.get('data')),
+        )
+
+        try:
+            r = self.api.post('http://www.keepertech.com/',
+                              data='some request 1 data')
+            assert r.status_code == 200
+            assert r.text == 'second'
+
+            r = self.api.post('http://www.keepertech.com/',
+                              data='some request 2 data')
+            assert r.status_code == 200
+            assert r.text == 'first'
+            assert int(r.headers['Content-Length']) == 42
         finally:
             tc.tearDown()
 
