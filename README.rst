@@ -55,6 +55,10 @@ New features:
   expectation.  This can be especially valuable for RPC-type interfaces
   (XML-RPC or SOAP, for example).
 
+- New ``kt.testing.requests.Requests`` methods: ``add_connect_timeout``,
+  ``add_read_timeout``, ``add_unreachable_host``, to add the
+  corresponding exceptions to the set of configured responses.
+
 
 1.0.0 (2016-03-21)
 ~~~~~~~~~~~~~~~~~~

@@ -5,11 +5,13 @@ Tests for kt.testing.requests.
 
 from __future__ import absolute_import
 
+import errno
 import socket
 import unittest
 
 import requests
 import requests.api
+import urllib3.exceptions
 
 import kt.testing
 import kt.testing.requests
@@ -43,16 +45,44 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
                 self.fixture.add_response('get', 'http://localhost:8000/foo')
                 self.fixture.add_error('get', 'http://localhost:8000/foo',
                                        socket.gaierror('unknown name'))
+                self.fixture.add_connect_timeout(
+                    'get', 'http://localhost:8000/foo')
+                self.fixture.add_read_timeout(
+                    'get', 'http://localhost:8000/foo',
+                    filter=lambda *a, **kw: True)
+                self.fixture.add_unreachable_host(
+                    'get', 'http://localhost:8000/foo')
 
             def testit(self):
                 r = self.api.get('http://localhost:8000/foo')
                 assert r.status_code == 200
                 assert r.text == ''
+
                 with self.assertRaises(socket.gaierror) as cm:
                     self.api.get('http://localhost:8000/foo')
                 self.assertEqual(str(cm.exception), 'unknown name')
 
-        self.check_successful_run(TC, count=2)
+                with self.assertRaises(requests.exceptions.Timeout) as cm:
+                    self.api.get('http://localhost:8000/foo')
+                self.assertIsInstance(cm.exception.args[0],
+                                      urllib3.exceptions.ConnectTimeoutError)
+
+                with self.assertRaises(requests.exceptions.Timeout) as cm:
+                    self.api.get('http://localhost:8000/foo')
+                self.assertIsInstance(cm.exception.args[0],
+                                      urllib3.exceptions.ReadTimeoutError)
+
+                with self.assertRaises(
+                        requests.exceptions.ConnectionError) as cm:
+                    self.api.get('http://localhost:8000/foo')
+                self.assertIsInstance(cm.exception.args[0],
+                                      urllib3.exceptions.MaxRetryError)
+                self.assertIsInstance(cm.exception.args[0].reason,
+                                      socket.error)
+                self.assertEqual(cm.exception.args[0].reason.errno,
+                                 errno.EHOSTUNREACH)
+
+        self.check_successful_run(TC, count=5)
 
     def test_requests_delete(self):
         self.check_requests_method('delete')
