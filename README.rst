@@ -39,6 +39,10 @@ whatever ways are appropriate (using ``mock.patch``, for example).
 Release history
 ---------------
 
+
+1.2.0 (2016-09-20)
+~~~~~~~~~~~~~~~~~~
+
 New features:
 
 - ``kt.testing.requests.RequestInfo`` object encapsulates information
