@@ -39,6 +39,15 @@ whatever ways are appropriate (using ``mock.patch``, for example).
 Release history
 ---------------
 
+New features:
+
+- ``kt.testing.requests.RequestInfo`` object encapsulates information
+  received by ``requests`` from the application.  This replaces a
+  5-tuple stored in the ``requests`` attribute of the fixture component
+  ``kt.testing.requests.Requests``, and provides named access to parts
+  of the provided data, for better readability in tests.
+
+
 1.1.0 (2016-05-10)
 ~~~~~~~~~~~~~~~~~~
 

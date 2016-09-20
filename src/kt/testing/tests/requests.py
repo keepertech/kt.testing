@@ -193,6 +193,12 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
                 r = self.api.get('http://localhost:8000/bar')
                 assert r.status_code == status
                 assert r.text == ''
+                req = self.fixture.requests[-1]
+                assert req.method == 'get'
+                assert req[0] == 'get'
+                assert req.url == 'http://localhost:8000/bar'
+                assert req[1] == 'http://localhost:8000/bar'
+                assert not req.body
 
         tc = self.check_successful_run(TC)
         assert tc.ran_testit
@@ -338,3 +344,34 @@ class TestWithoutInvokingRequests(kt.testing.tests.Core, unittest.TestCase):
         self.assertFalse(ok)
         (t, tb), = result.errors
         self.assertIn('configured responses not consumed', tb)
+
+    def get_response(self):
+        return kt.testing.requests.Response(
+            200, 'some text',
+            headers={'content-type': 'text/plain; charset=utf-8'},
+        )
+
+    def test_request_info_attributes(self):
+        response = self.get_response()
+
+        ri = kt.testing.requests.RequestInfo(
+            'get', 'http://localhost/path', response, (), {})
+
+        self.assertIs(ri[0], ri.method)
+        self.assertIs(ri[1], ri.url)
+        self.assertIs(ri[2], ri.response)
+        self.assertIs(ri[3], ri.args)
+        self.assertIs(ri[4], ri.kwargs)
+        self.assertIsNone(ri.body)
+        self.assertIsNone(ri.headers)
+
+    def test_request_info_repr(self):
+        response = self.get_response()
+        ri = kt.testing.requests.RequestInfo(
+            'get', 'http://localhost/path', response, (), {})
+
+        self.assertEqual(
+            repr(ri),
+            ("RequestInfo('get', 'http://localhost/path',"
+             " <kt.testing.requests.Response 200>, (), {})"
+             ))

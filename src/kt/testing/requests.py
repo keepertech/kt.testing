@@ -11,6 +11,7 @@ by URL from Python (httplib, urllib, urllib2, etc.).
 
 from __future__ import absolute_import
 
+import collections
 import errno
 import json
 import socket
@@ -104,7 +105,7 @@ class Requests(object):
                 response = resp
                 break
 
-        self.requests.append((method, url, response, args, kwargs))
+        self.requests.append(RequestInfo(method, url, response, args, kwargs))
         if isinstance(response, Exception):
             raise response
         else:
@@ -113,6 +114,25 @@ class Requests(object):
 
 def always_allowed(*args, **kwargs):
     return True
+
+
+_ReqInfo = collections.namedtuple(
+    '_ReqInfo', ('method', 'url', 'response', 'args', 'kwargs'))
+
+
+class RequestInfo(_ReqInfo):
+
+    @property
+    def body(self):
+        return self.kwargs.get('data')
+
+    @property
+    def headers(self):
+        return self.kwargs.get('headers')
+
+    def __repr__(self):
+        return ('%s(%r, %r, %r, %r, %r)'
+                % ((self.__class__.__name__,) + self))
 
 
 class Response(object):
@@ -129,3 +149,8 @@ class Response(object):
 
     def json(self):
         return json.loads(self.text)
+
+    def __repr__(self):
+        return '<%s.%s %s>' % (self.__class__.__module__,
+                               self.__class__.__name__,
+                               self.status_code)
