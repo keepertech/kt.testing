@@ -30,7 +30,7 @@ tests_require = ['nose']
 
 metadata = dict(
     name='kt.testing',
-    version='0',
+    version='1.2.0',
     description='Test support code featuring flexible harness composition',
     long_description=long_description,
     author='Fred L. Drake, Jr.',
