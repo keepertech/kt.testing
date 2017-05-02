@@ -59,14 +59,15 @@ New features:
 
 - ``kt.testing.requests.Requests`` methods ``add_error`` and
   ``add_response`` grew a new, optional parameter, ``filter``, which
-  accepts a callable wit the same signature as ``requests.request``.
+  accepts a callable with the same signature as ``requests.request``.
   The result is a Boolean value that indicates whether request should be
   considered a match for the response.  The filter function will only be
   called if the method and URL match.
 
   This can be used to check whether request body matches some
   expectation.  This can be especially valuable for RPC-type interfaces
-  (XML-RPC or SOAP, for example).
+  (XML-RPC or SOAP, for example) where several behaviors map to the same
+  URL and HTTP method.
 
 - New ``kt.testing.requests.Requests`` methods: ``add_connect_timeout``,
   ``add_read_timeout``, ``add_unreachable_host``, to add the
@@ -241,7 +242,7 @@ text/plain is used.
 The fixture provides these methods for configuring responses for
 particular requests by URL:
 
-``add_response(method, url, status=200, body=None, headers={})``
+``add_response(method, url, status=200, body=None, headers={}, filter=None)``
     Provide a particular response for a given URL and request method.
     Other aspects of the request are not considered for identifying what
     response to provide.
@@ -253,15 +254,37 @@ particular requests by URL:
     If the status indicates no entity should be returned, an empty body
     will be used.
 
+    If `filter` is provided and not ``None``, if must be a callable that
+    accepts the same signature as ``requests.request`` and returns a
+    Boolean value indicating whether than response applies to the
+    request being made.  If the result is true, the response is
+    considered a match and will be consumed.  If false, the response
+    will not be used, but will be considered for subsequent requests.
+
     The provided information will be used to create a response that is
     returned by the ``requests`` API.
 
-``add_error(method, url, exception)``
+``add_error(method, url, exception, filter=None)``
     Provide an exception that should be raised when a particular
     resource is requested.  This can be used to simulate errors such as
     a non-responsive server or DNS resolution failure.  Only the URL and
     request method are considered for identifying what response to
     provide.
+
+``add_connect_timeout(method, url, filter=None)``
+    Provide an exception structured the same way as it would be were the
+    host not to connect within a reasonable time.  This uses
+    ``add_error``, but saves having to construct the exception yourself.
+
+``add_read_timeout(method, url, filter=None)``
+    Provide an exception structured the same way as it would be were the
+    host to connect but not respond within a reasonable time.  This uses
+    ``add_error``, but saves having to construct the exception yourself.
+
+``add_unreachable_host(method, url, filter=None)``
+    Provide an exception structured the same way as it would be were the
+    host unreachable.  This uses ``add_error``, but saves having to
+    construct the exception yourself.
 
 If a request is made that does match any provided response, an
 ``AssertionError`` is raised; this will normally cause a test to fail,
