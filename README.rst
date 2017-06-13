@@ -12,7 +12,7 @@ underlying API is less interesting than the information exposed by the
 API and the operations performed on it.
 
 There are a number of ways to approach these situations using tests
-based on ``unittest.TestCase`` (or similar) fixtures.  Too often, these
+based on ``unittest.TestCase`` fixtures.  Too often, these
 become tangled messes where test authors have to pay attention to
 implementation details of base and mix-in classes to avoid support for
 different APIs interfering with each other's internal state.
@@ -38,6 +38,21 @@ whatever ways are appropriate (using ``mock.patch``, for example).
 
 Release history
 ---------------
+
+
+2.0.0 (2017-06-??)
+~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+   This release is **not** backward compatible with prior releases.
+   Tests *must* now be derived from the ``kt.testing.TestCase`` class.
+   This requirement allows the API to be compatible across Python 2 and
+   Python 3.
+
+New features:
+
+- Support for Python 3.
 
 
 1.2.0 (2016-09-20)
@@ -119,10 +134,10 @@ simple but complete, usable example::
 
 Using this from a test fixture is straightforward::
 
-  import unittest
+  import kt.testing
 
 
-  class TestMyThing(unittest.TestCase):
+  class TestMyThing(kt.testing.TestCase):
 
       logging = kt.testing.compose(LoggingFixture)
 
@@ -143,7 +158,7 @@ Constructor arguments for the fixture component can be provided with
 ``kt.testing.compose``, but note that the test case instance will always
 be passed as the first positional argument::
 
-  class TestMyThing(unittest.TestCase):
+  class TestMyThing(kt.testing.TestCase):
 
       logging = kt.testing.compose(LoggingFixture, name='my.package')
 
@@ -162,7 +177,7 @@ If the test class overrides the ``setUp`` method, it will need to ensure
 the superclass ``setUp`` is invoked so the ``setup`` method of the
 fixture components are invoked::
 
-  class TestSomeThing(unittest.TestCase):
+  class TestSomeThing(kt.testing.TestCase):
 
       logging = kt.testing.compose(LoggingFixture, name='my.package')
 
@@ -182,7 +197,7 @@ Multiple fixtures and test inheritance
 Multiple fixture components of the same or different types can be added
 for a single test class::
 
-  class TestMyThing(unittest.TestCase):
+  class TestMyThing(kt.testing.TestCase):
 
       my = kt.testing.compose(LoggingFixture, name='my.package')
       your = kt.testing.compose(LoggingFixture, name='your.package')
@@ -220,7 +235,7 @@ shouldn't care which is used to make a request.
 
 A fixture component for ``requests`` is provided::
 
-  class TestMyApplication(unittest.TestCase):
+  class TestMyApplication(kt.testing.TestCase):
 
       requests = kt.testing.compose(kt.testing.requests.Requests)
 
@@ -228,7 +243,7 @@ A default response entity can be provided via constructor arguments
 passed through ``compose``.  The body and content-type can both be
 provided::
 
-  class TestMyApplication(unittest.TestCase):
+  class TestMyApplication(kt.testing.TestCase):
 
       requests = kt.testing.compose(
           kt.testing.requests.Requests,

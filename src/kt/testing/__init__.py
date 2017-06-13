@@ -24,14 +24,18 @@ class FixtureComponent(object):
         pass
 
 
-class CompositeFixture(object):
+class TestCase(unittest.TestCase):
 
     def __new__(cls, *args, **kwargs):
-        self = super(CompositeFixture, cls).__new__(cls, *args, **kwargs)
+        new = super(TestCase, cls).__new__
+        if new == object.__new__:
+            self = new(cls)
+        else:
+            self = new(cls, *args, **kwargs)
         self._fixtures_by_marker = {}
         as_built = []
         for bcls in reversed(list(cls.mro())):
-            if not issubclass(bcls, CompositeFixture):
+            if not issubclass(bcls, TestCase):
                 continue
             fixtures = getattr(bcls, '__fixtures__', ())
             for marker, factory, args, kwargs in fixtures:
@@ -47,46 +51,17 @@ class CompositeFixture(object):
             teardown = getattr(fixture, 'teardown', None)
             if teardown is not None:
                 self.addCleanup(fixture.teardown)
-        super(CompositeFixture, self).setUp()
-
-
-class CFMeta(type):
-
-    def __new__(cls, name, bases, content):
-        compositor = CompositeFixture,
-        foundation = unittest.TestCase,
-        if bases == (object,):
-            bases = ()
-        else:
-            for base in bases:
-                if issubclass(base, CompositeFixture):
-                    compositor = ()
-                if issubclass(base, unittest.TestCase):
-                    foundation = ()
-        bases = compositor + bases + foundation
-
-        if '__fixtures__' in content:
-            content['__fixtures__'] = tuple(content['__fixtures__'])
-        return super(CFMeta, cls).__new__(cls, name, bases, content)
+        super(TestCase, self).setUp()
 
 
 def compose(factory, *args, **kwargs):
     depth = kwargs.pop('depth', 1)
     locals = sys._getframe(depth).f_locals
     if '__fixtures__' not in locals:
-        locals['__fixtures__'] = []
-    if '__metaclass__' in locals:
-        # Verify compatible metaclass:
-        cls = locals['__metaclass__']
-        if not issubclass(cls, CFMeta):
-            raise ValueError('competing metaclasses;'
-                             ' found: %s.%s, need: %s.CFMeta'
-                             % (cls.__module__, cls.__name__, __name__, ))
-    else:
-        locals['__metaclass__'] = CFMeta
+        locals['__fixtures__'] = ()
 
     marker = object()
-    locals['__fixtures__'].append((marker, factory, args, kwargs))
+    locals['__fixtures__'] += (marker, factory, args, kwargs),
     return _MarkerReference(marker, '_fixtures_by_marker')
 
 

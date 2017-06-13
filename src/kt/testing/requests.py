@@ -15,9 +15,13 @@ import collections
 import errno
 import json
 import socket
-import urlparse
 
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
+from six.moves import urllib
 import requests.structures
 import urllib3
 
@@ -54,7 +58,7 @@ class Requests(object):
         self._add(method, url, filter, exception)
 
     def add_connect_timeout(self, method, url, filter=None):
-        host = urlparse.urlsplit(url).hostname
+        host = urllib.parse.urlsplit(url).hostname
         exception = requests.exceptions.Timeout(
             urllib3.exceptions.ConnectTimeoutError(
                 None, 'Connection to %s out. (connect timeout=57.9)' % host))

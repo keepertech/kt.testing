@@ -67,20 +67,20 @@ class FixtureWithoutTeardown(object):
 
 def unwrap(tc):
     """Retrieve test object from unittest.TestCase-derived nose test."""
-    return tc.test
+    return tc
 
 
 class TestComposition(kt.testing.tests.Core):
 
-    def check_composite_case(self, cls):
-        assert issubclass(cls, kt.testing.CompositeFixture)
-        assert issubclass(cls, unittest.TestCase)
-
     def test_simple_usage(self):
-        self.check_simple_usage(object)
+        self.check_simple_usage(kt.testing.TestCase)
 
-    def test_simple_usage_testcase(self):
-        self.check_simple_usage(unittest.TestCase)
+    def test_simple_usage_derived(self):
+
+        class TC(kt.testing.TestCase):
+            pass
+
+        self.check_simple_usage(TC)
 
     def check_simple_usage(self, baseclass):
 
@@ -95,8 +95,6 @@ class TestComposition(kt.testing.tests.Core):
 
             def test_the_other(self):
                 self.record.append((self, 'test_the_other'))
-
-        self.check_composite_case(TC)
 
         # Rely on tests being sorted in alphabetical order by method name.
         tto, tt = self.loader.makeTest(TC)
@@ -144,14 +142,8 @@ class TestComposition(kt.testing.tests.Core):
         ]
 
     def test_inherited_fixture_components(self):
-        self.check_inherited_fixture_components(object)
 
-    def test_inherited_fixture_components_testcase(self):
-        self.check_inherited_fixture_components(unittest.TestCase)
-
-    def check_inherited_fixture_components(self, baseclass):
-
-        class TCOne(baseclass):
+        class TCOne(kt.testing.TestCase):
             usingbase = kt.testing.compose(FixtureUsingBaseClass)
 
         class TCTwo(TCOne):
@@ -160,9 +152,6 @@ class TestComposition(kt.testing.tests.Core):
 
             def test_this(self):
                 self.record.append((self, 'test_this'))
-
-        self.check_composite_case(TCOne)
-        self.check_composite_case(TCTwo)
 
         tt, = self.loader.makeTest(TCTwo)
 
@@ -180,95 +169,9 @@ class TestComposition(kt.testing.tests.Core):
             'derived cleanup',
         ]
 
-    def test_explicit_derived_metaclass_allowed(self):
+    def test_case_can_use_fixture_api(self):
 
-        class DerivedMeta(kt.testing.CFMeta):
-            pass
-
-        self.check_explicit_metaclass_allowed(DerivedMeta)
-
-    def test_explicit_metaclass_allowed(self):
-        self.check_explicit_metaclass_allowed(kt.testing.CFMeta)
-
-    def check_explicit_metaclass_allowed(self, meta):
-
-        class TC(object):
-            __metaclass__ = meta
-            fixture = kt.testing.compose(IndependentFixture)
-            record = []
-
-            def test_this(self):
-                self.record.append((self, 'test_this'))
-
-        self.check_composite_case(TC)
-
-        tt, = self.loader.makeTest(TC)
-
-        self.run_one_case(tt)
-        tt_record = [msg for tc, msg in TC.record]
-        assert tt_record == [
-            'independent init',
-            'independent setup',
-            'test_this',
-            'independent teardown',
-            'independent cleanup',
-        ]
-
-    def test_conflicting_metaclass_disallowed(self):
-
-        class AltMeta(type):
-            pass
-
-        try:
-            class TC(object):
-                __metaclass__ = AltMeta
-
-                kt.testing.compose(IndependentFixture)
-        except ValueError as e:
-            assert str(e) == ('competing metaclasses;'
-                              ' found: kt.testing.tests.composite.AltMeta,'
-                              ' need: kt.testing.CFMeta')
-        else:  # pragma: no cover
-            raise AssertionError('expected ValueError')
-
-    def test_metaclass_used_without_fixtures_allowed(self):
-        self.check_explicit_metaclass_without_fixtures_allowed(
-            kt.testing.CFMeta)
-
-    def test_derived_metaclass_used_without_fixtures_allowed(self):
-
-        class DerivedMeta(kt.testing.CFMeta):
-            pass
-
-        self.check_explicit_metaclass_without_fixtures_allowed(DerivedMeta)
-
-    def check_explicit_metaclass_without_fixtures_allowed(self, meta):
-        # Unlikely, but harmless.
-
-        class TC(object):
-            __metaclass__ = meta
-            record = []
-
-            def test_this(self):
-                self.record.append((self, 'test_this'))
-
-        self.check_composite_case(TC)
-
-        tt, = self.loader.makeTest(TC)
-
-        self.run_one_case(tt)
-        tt_record = [msg for tc, msg in TC.record]
-        assert tt_record == ['test_this']
-
-    def test_test_can_use_fixture_api(self):
-        self.check_case_can_use_fixture_api(object)
-
-    def test_test_can_use_fixture_api_testcase(self):
-        self.check_case_can_use_fixture_api(unittest.TestCase)
-
-    def check_case_can_use_fixture_api(self, base):
-
-        class TC(base):
+        class TC(kt.testing.TestCase):
             fixture = kt.testing.compose(IndependentFixture)
             record = []
 
@@ -296,28 +199,16 @@ class TestComposition(kt.testing.tests.Core):
         assert err.startswith('Traceback (most recent call last):')
         assert 'using independent class: bleh' in err
 
-    def test_fixture_components_get_args(self):
-        self.check_fixture_components_construction_args(object)
+    def test_fixture_components_construction_args(self):
 
-    def test_fixture_components_get_args_testcase(self):
-        self.check_fixture_components_construction_args(unittest.TestCase)
-
-    def test_fixture_components_get_kwargs(self):
-        self.check_fixture_components_construction_kwargs(object)
-
-    def test_fixture_components_get_kwargs_testcase(self):
-        self.check_fixture_components_construction_kwargs(unittest.TestCase)
-
-    def check_fixture_components_construction_args(self, base):
-
-        class TC(base):
+        class TC(kt.testing.TestCase):
             fixture = kt.testing.compose(IndependentFixture, 24)
 
         self.check_fixture_components_construction(TC)
 
-    def check_fixture_components_construction_kwargs(self, base):
+    def test_fixture_components_construction_kwargs(self):
 
-        class TC(base):
+        class TC(kt.testing.TestCase):
             fixture = kt.testing.compose(IndependentFixture, state=24)
 
         self.check_fixture_components_construction(TC)
@@ -338,14 +229,8 @@ class TestComposition(kt.testing.tests.Core):
     # added to the cleanup list.
 
     def test_fixture_without_teardown(self):
-        self.check_fixture_without_teardown(object)
 
-    def test_fixture_without_teardown_testcase(self):
-        self.check_fixture_without_teardown(unittest.TestCase)
-
-    def check_fixture_without_teardown(self, base):
-
-        class TC(base):
+        class TC(kt.testing.TestCase):
             fixture = kt.testing.compose(FixtureWithoutTeardown)
             record = []
 
@@ -367,14 +252,8 @@ class TestComposition(kt.testing.tests.Core):
     # inaccessible; aliases for component properties work just fine.
 
     def test_component_property_alias(self):
-        self.check_component_property_alias(object)
 
-    def test_component_property_alias_testcase(self):
-        self.check_component_property_alias(unittest.TestCase)
-
-    def check_component_property_alias(self, base):
-
-        class TCBase(base):
+        class TCBase(kt.testing.TestCase):
             fixture = kt.testing.compose(IndependentFixture, state='original')
 
         class TC(TCBase):
@@ -392,12 +271,6 @@ class TestComposition(kt.testing.tests.Core):
         assert tc.fixture.state == 'override'
 
     def test_inherited_cooperative_setup(self):
-        self.check_inherited_cooperative_setup(object)
-
-    def test_inherited_cooperative_setup_testcase(self):
-        self.check_inherited_cooperative_setup(unittest.TestCase)
-
-    def check_inherited_cooperative_setup(self, base):
         """\
         Co-operative setup is supported when appropriate bases are omitted.
 
@@ -406,7 +279,7 @@ class TestComposition(kt.testing.tests.Core):
 
         """
 
-        class TCBase(base):
+        class TCBase(kt.testing.TestCase):
 
             # No fixture composition here.
 

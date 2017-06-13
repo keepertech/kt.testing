@@ -23,9 +23,8 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
     api = requests
 
     def check_successful_run(self, cls, count=1):
-        t, = self.loader.makeTest(cls)
-        result = self.run_one_case(t)
-        tc = t.test
+        tc, = self.loader.makeTest(cls)
+        result = self.run_one_case(tc)
 
         assert result.errors == []
         assert result.failures == []
@@ -35,7 +34,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
     def test_requests_get(self):
 
-        class TC(object):
+        class TC(kt.testing.TestCase):
 
             api = self.api
             fixture = kt.testing.compose(kt.testing.requests.Requests)
@@ -98,7 +97,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
     def check_requests_method(self, request_method):
 
-        class TC(object):
+        class TC(kt.testing.TestCase):
 
             api = self.api
             method = request_method
@@ -132,7 +131,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
     def check_empty_response_required(self, status):
 
-        class TC(object):
+        class TC(kt.testing.TestCase):
 
             fixture = kt.testing.compose(kt.testing.requests.Requests)
             ran_testit = False
@@ -148,7 +147,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
         t, = self.loader.makeTest(TC)
         result = self.run_one_case(t)
-        tc = t.test
+        tc = t
 
         (xt, err), = result.errors
         assert xt is t
@@ -176,7 +175,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
     def check_empty_response_allowed(self, status):
 
-        class TC(object):
+        class TC(kt.testing.TestCase):
 
             api = self.api
             fixture = kt.testing.compose(kt.testing.requests.Requests)
@@ -205,7 +204,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
     def test_fails_without_matching_response(self):
 
-        class TC(unittest.TestCase):
+        class TC(kt.testing.TestCase):
 
             fixture = kt.testing.compose(kt.testing.requests.Requests)
 
@@ -213,7 +212,6 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
                 pass  # pragma: no cover
 
         tc, = self.loader.makeTest(TC)
-        tc = tc.test
         tc.setUp()
 
         try:
@@ -229,7 +227,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
     def test_multiple_responses(self):
 
-        class TC(unittest.TestCase):
+        class TC(kt.testing.TestCase):
 
             fixture = kt.testing.compose(kt.testing.requests.Requests)
 
@@ -237,7 +235,6 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
                 pass  # pragma: no cover
 
         tc, = self.loader.makeTest(TC)
-        tc = tc.test
         tc.setUp()
         tc.fixture.add_response(
             'get', 'http://www.keepertech.com/', body='first',
@@ -262,7 +259,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
     def test_filtered_responses(self):
 
-        class TC(unittest.TestCase):
+        class TC(kt.testing.TestCase):
 
             fixture = kt.testing.compose(kt.testing.requests.Requests)
 
@@ -270,7 +267,6 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
                 pass  # pragma: no cover
 
         tc, = self.loader.makeTest(TC)
-        tc = tc.test
         tc.setUp()
 
         tc.fixture.add_response(
@@ -318,31 +314,27 @@ class TestWithoutInvokingRequests(kt.testing.tests.Core, unittest.TestCase):
 
     def test_fails_if_responses_not_consumed(self):
 
-        class TC(unittest.TestCase):
+        class TC(kt.testing.TestCase):
 
             fixture = kt.testing.compose(kt.testing.requests.Requests)
+
+            def setUp(self):
+                super(TC, self).setUp()
+                self.fixture.add_response('get', 'http://www.keepertech.com/')
 
             def test_it(self):
                 pass
 
-        t, = self.loader.makeTest(TC)
-        tc = t.test
+        tc, = self.loader.makeTest(TC)
         result = tc.defaultTestResult()
-
-        tc.setUp()
-        tc.fixture.add_response('get', 'http://www.keepertech.com/')
-        tc.test_it()
-        tc.tearDown()
 
         # If the test runs without consuming all the responses, an error
         # is generated during teardown:
+        #
+        tc.run(result)
 
-        tc._resultForDoCleanups = result
-        assert result.errors == []
-        ok = tc.doCleanups()
-
-        self.assertFalse(ok)
-        (t, tb), = result.errors
+        # Uses failures in Python 3, errors in Python 2.
+        (t, tb), = result.failures + result.errors
         self.assertIn('configured responses not consumed', tb)
 
     def get_response(self):
