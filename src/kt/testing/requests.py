@@ -40,11 +40,7 @@ class Requests(object):
         self.requests = []
         self.responses = {}
 
-        p = mock.patch('requests.api.request', self.request)
-        self.test.addCleanup(p.stop)
-        p.start()
-
-        p = mock.patch('requests.request', self.request)
+        p = mock.patch('requests.sessions.Session.request', self.request)
         self.test.addCleanup(p.stop)
         p.start()
 
@@ -109,7 +105,9 @@ class Requests(object):
                 response = resp
                 break
 
-        self.requests.append(RequestInfo(method, url, response, args, kwargs))
+        self.requests.append(RequestInfo(
+            # `method` is uppercase when using the Session interface directly.
+            method.lower(), url, response, args, kwargs))
         if isinstance(response, Exception):
             raise response
         else:

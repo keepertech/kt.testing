@@ -40,6 +40,19 @@ Release history
 ---------------
 
 
+2.2.0 (unreleased)
+~~~~~~~~~~~~~~~~~~
+
+New feature:
+
+- ``kt.testing.requests`` intercepts the ``requests`` API at a slightly
+  lower level, hooking into the underlying ``requests.sessions.Session``
+  object instead of ``requests.api.requests``.  This makes it possible
+  to use this with packages that manage their own session objects, or
+  even derived session objects, as long as the ``request`` method is not
+  overridden.
+
+
 2.0.0 (2017-06-19)
 ~~~~~~~~~~~~~~~~~~
 

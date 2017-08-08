@@ -306,6 +306,33 @@ class TestRequestsAPIMethods(TestRequestsMethods):
     api = requests.api
 
 
+class TestRequestsSessionMethods(TestRequestsMethods):
+    """Anything that uses requests.* should be able to use requests.api.*.
+
+    Verify the requests.api.* functions are handled by the fixture.
+
+    """
+
+    def setUp(self):
+        self.api = requests.Session()
+        super(TestRequestsSessionMethods, self).setUp()
+
+
+class TestRequestsDerivedSessionMethods(TestRequestsMethods):
+    """Anything that uses requests.* should be able to use requests.api.*.
+
+    Verify the requests.api.* functions are handled by the fixture.
+
+    """
+
+    class SpecialSession(requests.Session):
+        special = True
+
+    def setUp(self):
+        self.api = self.SpecialSession()
+        super(TestRequestsDerivedSessionMethods, self).setUp()
+
+
 class TestWithoutInvokingRequests(kt.testing.tests.Core, unittest.TestCase):
 
     # These tests don't cause any of the mocked APIs in requests to be
