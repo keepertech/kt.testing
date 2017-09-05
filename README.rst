@@ -40,7 +40,7 @@ Release history
 ---------------
 
 
-2.2.0 (unreleased)
+2.1.0 (2017-09-05)
 ~~~~~~~~~~~~~~~~~~
 
 New feature:
