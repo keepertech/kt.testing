@@ -149,6 +149,17 @@ class Response(object):
         self.text = text
         self.headers = headers
 
+    def iter_content(self, chunk_size=1, decode_unicode=False):
+        # This doesn't support decode_unicode (yet).
+        if decode_unicode:
+            cls = self.__class__
+            raise AssertionError('%s.%s does not support decode_unicode'
+                                 % (cls.__module__, cls.__name__))
+        data = self.text
+        while data:
+            yield data[:chunk_size]
+            data = data[chunk_size:]
+
     def json(self):
         return json.loads(self.text)
 

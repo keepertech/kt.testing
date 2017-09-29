@@ -40,6 +40,15 @@ Release history
 ---------------
 
 
+2.2.0 (2017-09-29)
+~~~~~~~~~~~~~~~~~~
+
+New feature:
+
+- ``kt.testing.requests`` response objects support the ``iter_content``
+  method, so long as ``decode_unicode`` is false.
+
+
 2.1.0 (2017-09-05)
 ~~~~~~~~~~~~~~~~~~
 

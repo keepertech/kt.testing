@@ -295,6 +295,42 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
         finally:
             tc.tearDown()
 
+    def test_iter_content_default_chunks(self):
+
+        class TC(kt.testing.TestCase):
+
+            fixture = kt.testing.compose(kt.testing.requests.Requests)
+
+            def setUp(inst):
+                super(TC, inst).setUp()
+                inst.fixture.add_response(
+                    'get', 'http://www.keepertech.com/', body='first')
+
+            def testit(inst):
+                resp = self.api.get('http://www.keepertech.com/', stream=True)
+                inst.chunks = list(resp.iter_content())
+
+        tc = self.check_successful_run(TC)
+        self.assertEqual(tc.chunks, ['f', 'i', 'r', 's', 't'])
+
+    def test_iter_content_specified_chunks(self):
+
+        class TC(kt.testing.TestCase):
+
+            fixture = kt.testing.compose(kt.testing.requests.Requests)
+
+            def setUp(inst):
+                super(TC, inst).setUp()
+                inst.fixture.add_response(
+                    'get', 'http://www.keepertech.com/', body='another')
+
+            def testit(inst):
+                resp = self.api.get('http://www.keepertech.com/', stream=True)
+                inst.chunks = list(resp.iter_content(chunk_size=3))
+
+        tc = self.check_successful_run(TC)
+        self.assertEqual(tc.chunks, ['ano', 'the', 'r'])
+
 
 class TestRequestsAPIMethods(TestRequestsMethods):
     """Anything that uses requests.* should be able to use requests.api.*.
