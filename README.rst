@@ -40,6 +40,19 @@ Release history
 ---------------
 
 
+3.0.0 (2017-11-30)
+~~~~~~~~~~~~~~~~~~
+
+Backward incompatible change:
+
+- The ``kt`` namespace package is switched to use a ``pkgutil``-style
+  construction, removing the ``pkg_resources`` support entirely.  This
+  should not affect many users.
+
+  See `Packaging namespace packages`__ for more information about
+  namespace package styles.
+
+
 2.2.0 (2017-09-29)
 ~~~~~~~~~~~~~~~~~~
 
@@ -338,4 +351,8 @@ If multiple configurations are made for the same request method and URL
 the order configured.
 
 
-.. _Keeper Technology: http://www.keepertech.com/
+.. _Keeper Technology:
+   http://www.keepertech.com/
+
+.. _Packaging namespace packages:
+   https://packaging.python.org/guides/packaging-namespace-packages/

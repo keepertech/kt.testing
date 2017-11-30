@@ -70,7 +70,6 @@ metadata = dict(
     url='https://github.com/keepertech/kt.testing',
     packages=packages,
     package_dir={'': 'src'},
-    namespace_packages=['kt'],
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require={
