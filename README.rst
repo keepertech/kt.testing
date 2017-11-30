@@ -49,7 +49,7 @@ Backward incompatible change:
   construction, removing the ``pkg_resources`` support entirely.  This
   should not affect many users.
 
-  See `Packaging namespace packages`__ for more information about
+  See `Packaging namespace packages`_ for more information about
   namespace package styles.
 
 
