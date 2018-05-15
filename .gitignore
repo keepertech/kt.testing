@@ -1,8 +1,9 @@
-.coverage
-.eggs/
-build/
-coverage/
-deb_dist/
-dist/
-kt.testing.egg-info/
+/.coverage
+/.eggs
+/.tox
+/build
+/coverage
+/deb_dist
+/dist
+/src/kt.testing.egg-info
 *.pyc

@@ -40,6 +40,14 @@ Release history
 ---------------
 
 
+3.0.1 (unreleased)
+~~~~~~~~~~~~~~~~~~
+
+Development support:
+
+- Add tox configuration for running tests.
+
+
 3.0.0 (2017-11-30)
 ~~~~~~~~~~~~~~~~~~
 
