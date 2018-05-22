@@ -5,5 +5,7 @@
 /coverage
 /deb_dist
 /dist
+/htmlcov
+/kt.testing-*.tar.gz
 /src/kt.testing.egg-info
 *.pyc

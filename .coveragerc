@@ -8,3 +8,16 @@ precision = 1
 [run]
 branch = True
 source = kt.testing
+
+[paths]
+#
+# This declares that these paths are equivalent.
+#
+# Our tox.ini runs coverage in parallel mode, and combines results
+# across Python versions at the end.  This lets us review the coverage
+# of Python-version-specific bits of code in one report.
+#
+source =
+   kt
+   .tox/*/lib/python*/site-packages/kt
+   .tox/pypy*/site-packages/kt
