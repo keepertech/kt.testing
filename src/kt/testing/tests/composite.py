@@ -6,8 +6,6 @@ will be needed to ensure we work with other test runners.
 
 """
 
-import unittest
-
 import kt.testing
 import kt.testing.tests
 
@@ -65,11 +63,6 @@ class FixtureWithoutTeardown(object):
                                              'teardownless cleanup')))
 
 
-def unwrap(tc):
-    """Retrieve test object from unittest.TestCase-derived nose test."""
-    return tc
-
-
 class TestComposition(kt.testing.tests.Core):
 
     def test_simple_usage(self):
@@ -98,8 +91,8 @@ class TestComposition(kt.testing.tests.Core):
 
         # Rely on tests being sorted in alphabetical order by method name.
         tto, tt = self.loader.makeTest(TC)
-        tto_tc = unwrap(tto)
-        tt_tc = unwrap(tt)
+        tto_tc = tto
+        tt_tc = tt
 
         self.run_one_case(tto)
         tto_record = [msg for tc, msg in TC.record if tc is tto_tc]
@@ -183,7 +176,7 @@ class TestComposition(kt.testing.tests.Core):
         tt, = self.loader.makeTest(TC)
         result = self.run_one_case(tt)
         tt_record = [msg for tc, msg in TC.record]
-        assert unwrap(tt).state == unwrap(tt).fixture.state
+        assert tt.state == tt.fixture.state
 
         assert tt_record == [
             'independent init',
@@ -223,7 +216,7 @@ class TestComposition(kt.testing.tests.Core):
 
         tt, = self.loader.makeTest(TC)
         self.run_one_case(tt)
-        assert unwrap(tt).state == 24
+        assert tt.state == 24
 
     # If the fixture component doesn't have a teardown method, it isn't
     # added to the cleanup list.
@@ -264,8 +257,7 @@ class TestComposition(kt.testing.tests.Core):
             def test_this(self):
                 pass  # pragma: no cover
 
-        tt, = self.loader.makeTest(TC)
-        tc = unwrap(tt)
+        tc, = self.loader.makeTest(TC)
 
         assert tc.orig.state == 'original'
         assert tc.fixture.state == 'override'
