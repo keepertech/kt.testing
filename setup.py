@@ -62,7 +62,7 @@ if sys.version_info[:2] < (3, 3):
 
 metadata = dict(
     name='kt.testing',
-    version='0',
+    version='3.1.1',
     description='Test support code featuring flexible harness composition',
     long_description=long_description,
     author='Fred L. Drake, Jr.',
