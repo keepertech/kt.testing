@@ -6,6 +6,8 @@ Composition of test fixture components offering extended APIs.
 import sys
 import unittest
 
+import kt.testing.cleanup
+
 
 class FixtureComponent(object):
     """Convenience base class for fixture components.
@@ -46,12 +48,17 @@ class TestCase(unittest.TestCase):
         return self
 
     def setUp(self):
+        kt.testing.cleanup.cleanup()
         for fixture in self._fixtures_as_built:
             fixture.setup()
             teardown = getattr(fixture, 'teardown', None)
             if teardown is not None:
                 self.addCleanup(fixture.teardown)
         super(TestCase, self).setUp()
+
+    def tearDown(self):
+        super(TestCase, self).tearDown()
+        kt.testing.cleanup.cleanup()
 
 
 def compose(factory, *args, **kwargs):

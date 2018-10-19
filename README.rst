@@ -40,8 +40,15 @@ Release history
 ---------------
 
 
-3.0.1 (unreleased)
+3.1.0 (unreleased)
 ~~~~~~~~~~~~~~~~~~
+
+New feature:
+
+- ``kt.testing.cleanup`` supports global registration of cleanup
+  functions called before & after every test (when using
+  ``kt.testing.TestCase``).  Directly inspired by
+  ``zope.testing.cleanup``, and cooperative with the same.
 
 Development support:
 
@@ -359,8 +366,58 @@ If multiple configurations are made for the same request method and URL
 the order configured.
 
 
+``kt.testing.cleanup`` - Global cleanup registration
+----------------------------------------------------
+
+Many libraries and applications end up maintaining small bits of global
+state.  These bits may be caches, or information derived from
+configuration, but they need to be cleared between tests to avoid tests
+interfering with each other in ways that can be painful to debug.
+
+Clearing these bits of module state in the ``setUp`` or ``tearDown``
+methods of tests takes care of the problem, but each application needs
+to be aware of every such bit of module state that exists in the
+libraries and application; this can be a challenge.
+
+Allowing each library or module to register a cleanup function makes it
+possible to collect everything that's needed to ensure test cleanup can
+be sufficient.
+
+This approach was built in the |zope.testing|_ package's ``cleanup``
+module, which provided functions to register and invoke cleanup
+functions.  The ``kt.testing.cleanup`` module provides a similar API.
+If ``zope.testing.cleanup`` is also used, ``kt.testing.cleanup``
+cooperates by sharing the behind-the-scenes registry of cleanup
+functions.
+
+There are two functions which provide the ``kt.testing.cleanup`` API:
+
+``register(func, *args, **kwargs)``
+    Register a callable that should be invoked to clean up module
+    state.  The callable will be invoked with the provided additional
+    positional and keyword arguments.
+
+    *func* should be fast and simple, and must not raise an
+    exception.
+
+``cleanup()``
+    Invoke all registered cleanups.  The cleanup functions will be
+    invoked in the order registered.  If ``zope.testing.cleanup`` was
+    also used, cleanups registered via each API may be intermingled,
+    according to the order of registration.
+
+The ``setUp`` and ``tearDown`` methods of ``kt.testing.TestCase`` both
+invoke the ``cleanup`` function.
+
+
+
+.. |zope.testing| replace::  ``zope.testing``
+
 .. _Keeper Technology:
    http://www.keepertech.com/
 
 .. _Packaging namespace packages:
    https://packaging.python.org/guides/packaging-namespace-packages/
+
+.. _zope.testing:
+   https://pypi.org/project/zope.testing/
