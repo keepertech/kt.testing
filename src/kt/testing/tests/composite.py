@@ -75,6 +75,29 @@ class TestComposition(kt.testing.tests.Core):
 
         self.check_simple_usage(TC)
 
+    def test_simple_usage_overridden_new(self):
+
+        class AlternateBase(object):
+
+            def __new__(cls, *args, **kwargs):
+                rv = object.__new__(cls)
+                rv.alternate_base = True
+                return rv
+
+        class MagicTC(kt.testing.TestCase, AlternateBase):
+            pass
+
+        class DerivedTC(MagicTC):
+
+            def runTest(self):
+                """Just a dummy."""
+
+        # Make sure our special __new__ was invoked.
+        tc = DerivedTC()
+        assert tc.alternate_base
+
+        self.check_simple_usage(MagicTC)
+
     def check_simple_usage(self, baseclass):
 
         class TC(baseclass):
@@ -255,7 +278,7 @@ class TestComposition(kt.testing.tests.Core):
             record = []
 
             def test_this(self):
-                pass  # pragma: no cover
+                """Just a dummy."""
 
         tc, = self.loader.makeTest(TC)
 
