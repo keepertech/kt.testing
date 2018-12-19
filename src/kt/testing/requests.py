@@ -40,6 +40,12 @@ class Requests(object):
         self.requests = []
         self.responses = {}
 
+        # We really want to intercept Session.get_adapter and provide
+        # our own adapter.  That would allow us to get the prepared
+        # request and the cooked options passed to the adapter's send
+        # method, and rely less on the raw kwargs passed to the requests
+        # API.
+        #
         p = mock.patch('requests.sessions.Session.request', self.request)
         self.test.addCleanup(p.stop)
         p.start()
@@ -96,6 +102,7 @@ class Requests(object):
         key = method.upper(), url
         response = AssertionError('unexpected request: %s %s' % key)
 
+        skipped_over = 0
         for i, (filter, resp) in enumerate(self.responses.get(key, ())):
             if filter(method, url, *args, **kwargs):
                 del self.responses[key][i]
@@ -104,6 +111,54 @@ class Requests(object):
                     del self.responses[key]
                 response = resp
                 break
+            skipped_over += 1
+        else:
+            # We didn't find a response; our default is going to be used.
+            # Attempt to make it more informative for requests with payloads.
+            #
+            # This is much more gnarly than it should be, since we're
+            # intercepting the request/response at Session.request
+            # instead of Session.get_adapter().send; that could be
+            # improved in the future.
+            #
+            if method.upper() in ('PATCH', 'POST', 'PUT'):
+                headers = {k.lower(): v
+                           for k, v in kwargs.get('headers', {}).items()}
+                ctype = headers.get('content-type', '???')
+                lctype = ctype.lower()
+                display = None
+                if kwargs.get('json') or ('json' in lctype):
+                    # Format & append to message.
+                    if kwargs.get('data') is not None:
+                        try:
+                            data = json.loads(kwargs['data'])
+                        except ValueError:
+                            display = '(malformed JSON data)'
+                    elif kwargs.get('json') is not None:
+                        data = kwargs['json']
+                    else:
+                        display = '(undefined content)'
+                    if not display:
+                        display = json.dumps(data, indent=2, sort_keys=True)
+                        display = display.replace('\n', '\n    ').rstrip()
+                        ctype += ' (pretty-printed for display)'
+                elif 'xml' in lctype:
+                    # Append to message.
+                    display = kwargs.get('data', '(undefined content)')
+                else:
+                    display = '(content not shown)'
+                extra = ''
+                if skipped_over:
+                    extra += ('\n    (filtered %d prepared response%s)'
+                              % (skipped_over,
+                                 '' if skipped_over == 1 else 's'))
+                extra += ('\n    Content-Type: %s\n    %s'
+                          % (ctype, display))
+                message = str(response).rstrip() + extra
+                response.args = (message,) + response.args[1:]
+                if hasattr(response, 'message'):
+                    # This is really only for Python 2:
+                    response.message = message
 
         self.requests.append(RequestInfo(
             # `method` is uppercase when using the Session interface directly.

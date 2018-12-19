@@ -40,6 +40,17 @@ Release history
 ---------------
 
 
+3.1.2 (2018-12-19)
+~~~~~~~~~~~~~~~~~~
+
+Minor tweak:
+
+- ``AssertionError`` raised by ``kt.testing.requests`` fixture when
+  there is no prepared response now provides a more substantial message
+  for PATCH, POST, and PUT requests, showing more information about the
+  payload.  This can make it easier to debug problems.
+
+
 3.1.1 (2018-10-19)
 ~~~~~~~~~~~~~~~~~~
 

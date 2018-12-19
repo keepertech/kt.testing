@@ -6,6 +6,7 @@ Tests for kt.testing.requests.
 from __future__ import absolute_import
 
 import errno
+import os
 import socket
 import unittest
 
@@ -16,6 +17,19 @@ import urllib3.exceptions
 import kt.testing
 import kt.testing.requests
 import kt.testing.tests
+
+
+class EmptyTC(kt.testing.TestCase):
+    """Empty test case for tests where only setup/teardown matter.
+
+    This is reasonable where we're testing the fixture component directly.
+
+    """
+
+    fixture = kt.testing.compose(kt.testing.requests.Requests)
+
+    def testit(self):
+        """Just a dummy."""
 
 
 class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
@@ -203,38 +217,156 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
         assert tc.ran_testit
 
     def test_fails_without_matching_response(self):
-
-        class TC(kt.testing.TestCase):
-
-            fixture = kt.testing.compose(kt.testing.requests.Requests)
-
-            def testit(self):
-                pass  # pragma: no cover
-
-        tc, = self.loader.makeTest(TC)
+        tc, = self.loader.makeTest(EmptyTC)
         tc.setUp()
 
         try:
-            try:
+            with self.assertRaises(AssertionError) as cm:
                 self.api.get('http://www.python.org/')
-            except AssertionError as e:
-                e = str(e)
-                assert e == 'unexpected request: GET http://www.python.org/'
-            else:  # pragma: no cover
-                raise AssertionError('expected AssertionError to be raised')
+
+            em = str(cm.exception)
+            assert em == 'unexpected request: GET http://www.python.org/'
+        finally:
+            tc.tearDown()
+
+    def test_fails_without_matching_response_json(self):
+        self.check_fails_without_matching_response_json('patch')
+        self.check_fails_without_matching_response_json('post')
+        self.check_fails_without_matching_response_json('put')
+
+    def check_fails_without_matching_response_json(self, method):
+        tc, = self.loader.makeTest(EmptyTC)
+        tc.setUp()
+        msg = 'unexpected request: %s http://www.python.org/' % method.upper()
+        meth = getattr(self.api, method)
+
+        try:
+            with self.assertRaises(AssertionError) as cm:
+                meth('http://www.python.org/', json={'n': 42})
+            em = str(cm.exception)
+            assert msg in em
+            # Verify normalized, pretty-printed, indented display is present:
+            assert '\n    {\n      "n": 42\n    }' in em
+            assert ' (pretty-printed for display)' in em
+        finally:
+            tc.tearDown()
+
+    def test_fails_without_matching_response_json_as_data(self):
+        self.check_fails_without_matching_response_json_as_data('patch')
+        self.check_fails_without_matching_response_json_as_data('post')
+        self.check_fails_without_matching_response_json_as_data('put')
+
+    def check_fails_without_matching_response_json_as_data(self, method):
+        tc, = self.loader.makeTest(EmptyTC)
+        tc.setUp()
+        msg = 'unexpected request: %s http://www.python.org/' % method.upper()
+        meth = getattr(self.api, method)
+
+        try:
+            with self.assertRaises(AssertionError) as cm:
+                meth('http://www.python.org/', data='{"n": 42}',
+                     headers={'ConTent-tYPE': 'Application/Magic+JSON'})
+            em = str(cm.exception)
+            assert msg in em
+            # Verify normalized, pretty-printed, indented display is present:
+            assert '\n    Content-Type: Application/Magic+JSON' in em
+            assert '\n    {\n      "n": 42\n    }' in em
+            assert ' (pretty-printed for display)' in em
+        finally:
+            tc.tearDown()
+
+    def test_fails_without_matching_response_malformed_json(self):
+        self.check_fails_without_matching_response_malformed_json('patch')
+        self.check_fails_without_matching_response_malformed_json('post')
+        self.check_fails_without_matching_response_malformed_json('put')
+
+    def check_fails_without_matching_response_malformed_json(self, method):
+        tc, = self.loader.makeTest(EmptyTC)
+        tc.setUp()
+        msg = 'unexpected request: %s http://www.python.org/' % method.upper()
+        meth = getattr(self.api, method)
+
+        try:
+            with self.assertRaises(AssertionError) as cm:
+                meth('http://www.python.org/', data='{"n":',
+                     headers={'ConTent-tYPE': 'Application/Magic+JSON'})
+            em = str(cm.exception)
+            assert msg in em
+            assert '\n    Content-Type: Application/Magic+JSON' in em
+            assert '\n    (malformed JSON data)' in em
+        finally:
+            tc.tearDown()
+
+    def test_fails_without_matching_response_xml(self):
+        self.check_fails_without_matching_response_xml('patch')
+        self.check_fails_without_matching_response_xml('post')
+        self.check_fails_without_matching_response_xml('put')
+
+    def check_fails_without_matching_response_xml(self, method):
+        tc, = self.loader.makeTest(EmptyTC)
+        tc.setUp()
+        msg = 'unexpected request: %s http://www.python.org/' % method.upper()
+        meth = getattr(self.api, method)
+
+        try:
+            with self.assertRaises(AssertionError) as cm:
+                meth('http://www.python.org/',
+                     data='<pointy>brackets</pointy>',
+                     headers={'ConTent-tYPE': 'Application/Magic+XML'})
+            em = str(cm.exception)
+            assert msg in em
+            assert '\n    Content-Type: Application/Magic+XML' in em
+            assert '\n    <pointy>brackets</pointy>' in em
+        finally:
+            tc.tearDown()
+
+    def test_fails_without_matching_response_unhandled_ctype(self):
+        self.check_fails_without_matching_response_unhandled_ctype('patch')
+        self.check_fails_without_matching_response_unhandled_ctype('post')
+        self.check_fails_without_matching_response_unhandled_ctype('put')
+
+    def check_fails_without_matching_response_unhandled_ctype(self, method):
+        tc, = self.loader.makeTest(EmptyTC)
+        tc.setUp()
+        msg = 'unexpected request: %s http://www.python.org/' % method.upper()
+        meth = getattr(self.api, method)
+
+        try:
+            with self.assertRaises(AssertionError) as cm:
+                meth('http://www.python.org/',
+                     data=os.urandom(42),
+                     headers={'ConTent-tYPE': 'Application/Octet-Stream'})
+            em = str(cm.exception)
+            assert msg in em
+            assert '\n    Content-Type: Application/Octet-Stream' in em
+            assert '\n    (content not shown)' in em
+        finally:
+            tc.tearDown()
+
+    def test_fails_without_matching_response_missing_json(self):
+        self.check_fails_without_matching_response_missing_json('patch')
+        self.check_fails_without_matching_response_missing_json('post')
+        self.check_fails_without_matching_response_missing_json('put')
+
+    def check_fails_without_matching_response_missing_json(self, method):
+        tc, = self.loader.makeTest(EmptyTC)
+        tc.setUp()
+        msg = 'unexpected request: %s http://www.python.org/' % method.upper()
+        meth = getattr(self.api, method)
+
+        try:
+            with self.assertRaises(AssertionError) as cm:
+                meth('http://www.python.org/',
+                     headers={'ConTent-tYPE': 'Application/Magic+JSON'})
+            em = str(cm.exception)
+            assert msg in em
+            assert '\n    Content-Type: Application/Magic+JSON' in em
+            assert '\n    (undefined content)' in em
         finally:
             tc.tearDown()
 
     def test_multiple_responses(self):
-
-        class TC(kt.testing.TestCase):
-
-            fixture = kt.testing.compose(kt.testing.requests.Requests)
-
-            def testit(self):
-                pass  # pragma: no cover
-
-        tc, = self.loader.makeTest(TC)
+        tc, = self.loader.makeTest(EmptyTC)
         tc.setUp()
         tc.fixture.add_response(
             'get', 'http://www.keepertech.com/', body='first',
@@ -258,15 +390,7 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
             tc.tearDown()
 
     def test_filtered_responses(self):
-
-        class TC(kt.testing.TestCase):
-
-            fixture = kt.testing.compose(kt.testing.requests.Requests)
-
-            def testit(self):
-                pass  # pragma: no cover
-
-        tc, = self.loader.makeTest(TC)
+        tc, = self.loader.makeTest(EmptyTC)
         tc.setUp()
 
         tc.fixture.add_response(
@@ -330,6 +454,52 @@ class TestRequestsMethods(kt.testing.tests.Core, unittest.TestCase):
 
         tc = self.check_successful_run(TC)
         self.assertEqual(tc.chunks, ['ano', 'the', 'r'])
+
+    def test_fails_without_matching_after_filtering_one(self):
+
+        def extra_setup(inst):
+            inst.fixture.add_response(
+                'put', 'http://www.keepertech.com/', body='first',
+                filter=(lambda method, url, *args, **kwargs: False))
+
+        exc = self.run_failing_case_with_setup(extra_setup)
+        assert '\n    (filtered 1 prepared response)' in str(exc)
+
+    def test_fails_without_matching_after_filtering_two(self):
+
+        def extra_setup(inst):
+            inst.fixture.add_response(
+                'put', 'http://www.keepertech.com/', body='first',
+                filter=(lambda method, url, *args, **kwargs: False))
+            inst.fixture.add_response(
+                'put', 'http://www.keepertech.com/', body='second',
+                filter=(lambda method, url, *args, **kwargs: False))
+
+        exc = self.run_failing_case_with_setup(extra_setup)
+        assert '\n    (filtered 2 prepared responses)' in str(exc)
+
+    def run_failing_case_with_setup(self, setup_function):
+
+        class TC(kt.testing.TestCase):
+
+            fixture = kt.testing.compose(kt.testing.requests.Requests)
+
+            def setUp(inst):
+                super(TC, inst).setUp()
+                setup_function(inst)
+
+            def testit(inst):
+                self.api.put('http://www.keepertech.com/', data='stuff')
+
+        tc, = self.loader.makeTest(TC)
+        tc.setUp()
+        try:
+            with self.assertRaises(AssertionError) as cm:
+                tc.testit()
+        finally:
+            tc.tearDown()
+
+        return cm.exception
 
 
 class TestRequestsAPIMethods(TestRequestsMethods):
