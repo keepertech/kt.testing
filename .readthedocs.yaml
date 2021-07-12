@@ -1,0 +1,11 @@
+
+version: 2
+
+python:
+  version: 3.9
+  install:
+    - path: .
+
+sphinx:
+  configuration: docs/conf.py
+  dirhtml: docs/build/html
