@@ -1,11 +1,11 @@
 /.coverage
-/.eggs
+/.coverage.*
 /.tox
-/build
-/coverage
-/deb_dist
-/dist
-/htmlcov
+/build/
+/deb_dist/
+/dist/
+/docs/build/
+/htmlcov/
 /kt.testing-*.tar.gz
 /src/kt.testing.egg-info
 *.pyc

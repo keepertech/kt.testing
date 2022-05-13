@@ -43,7 +43,11 @@ Release history
 3.2.0 (unreleased)
 ~~~~~~~~~~~~~~~~~~
 
-- Support Python 3.8.
+- Drop support for Python 3.5.
+
+- Support Python 3.8, 3.9, 3.10, 3.11.
+
+- Add Sphinx docs for RTD.
 
 - Switch to unittest discover for running tests, dropping configuration
   for nose/nose2/pytest.  Deprecation warnings are now raised as errors.
