@@ -50,7 +50,7 @@ Release history
 - Add Sphinx docs for RTD.
 
 - Switch to unittest discover for running tests, dropping configuration
-  for nose/nose2/pytest.  Deprecation warnings are now raised as errors.
+  for nose/nose2/pytest.
 
 - The "test" extra remains for compatibility, but does not require
   anything additional.
